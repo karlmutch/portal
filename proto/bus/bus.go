@@ -8,10 +8,6 @@ import (
 	proto "github.com/lthibault/portal/proto"
 )
 
-type msgSender interface {
-	sendMsg(*portal.Message)
-}
-
 type busEP struct {
 	portal.Endpoint
 	q   chan *portal.Message
@@ -92,32 +88,22 @@ func (p Protocol) startSending() {
 				panic("ensure portal.Doner fires closes before chSend/chRecv")
 			}
 
-			p.broadcast(&wg, msg).Wait()
+			// broadcast
+			m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
+			for id, peer := range m {
+				// if there's a header, it means the msg was rebroadcast
+				if msg.From != nil && id == *msg.From {
+					continue
+				}
+
+				// proto.Neighborhood stores portal.Endpoints, so we must type-assert
+				wg.Add(1)
+				peer.(*busEP).sendMsg(msg.Ref())
+			}
+			done()
+			wg.Done()
 		}
 	}
-}
-
-func (p Protocol) broadcast(wg *sync.WaitGroup, msg *portal.Message) *sync.WaitGroup {
-	m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
-	defer done()
-
-	for id, peer := range m {
-		// if there's a header, it means the msg was rebroadcast
-		if msg.From != nil && id == *msg.From {
-			continue
-		}
-
-		// proto.Neighborhood stores portal.Endpoints, so we must type-assert
-		go p.unicast(wg, peer.(msgSender), msg)
-	}
-
-	return wg
-}
-
-func (p Protocol) unicast(wg *sync.WaitGroup, s msgSender, msg *portal.Message) {
-	wg.Add(1)
-	s.sendMsg(msg.Ref())
-	wg.Done()
 }
 
 func (p *Protocol) AddEndpoint(ep portal.Endpoint) {
