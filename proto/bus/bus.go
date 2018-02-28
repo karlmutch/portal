@@ -103,7 +103,7 @@ func (p Protocol) broadcast(wg *sync.WaitGroup, msg *portal.Message) *sync.WaitG
 
 	for id, peer := range m {
 		// if there's a header, it means the msg was rebroadcast
-		if id == *msg.From {
+		if msg.From != nil && id == *msg.From {
 			continue
 		}
 
