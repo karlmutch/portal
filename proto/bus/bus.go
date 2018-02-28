@@ -57,16 +57,50 @@ func (b busEP) startReceiving() {
 	}
 }
 
+type busNeighborhood struct {
+	sync.RWMutex
+	epts map[portal.ID]*busEP
+}
+
+func (n *busNeighborhood) RMap() (map[portal.ID]*busEP, func()) {
+	n.RLock()
+	return n.epts, n.RUnlock
+}
+
+func (n *busNeighborhood) SetPeer(id portal.ID, be *busEP) {
+	n.Lock()
+	n.epts[id] = be
+	n.Unlock()
+}
+
+func (n *busNeighborhood) GetPeer(id portal.ID) (b *busEP, ok bool) {
+	n.RLock()
+	b, ok = n.epts[id]
+	n.RUnlock()
+	return
+}
+
+func (n *busNeighborhood) DropPeer(id portal.ID) {
+	n.Lock()
+	be := n.epts[id]
+	delete(n.epts, id)
+	n.Unlock()
+
+	if be != nil {
+		be.Close()
+	}
+}
+
 // Protocol implementing BUS
 type Protocol struct {
 	ptl portal.ProtocolPortal
-	n   proto.Neighborhood
+	n   *busNeighborhood
 }
 
 // Init the protocol (called by portal)
 func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 	p.ptl = ptl
-	p.n = proto.NewNeighborhood()
+	p.n = &busNeighborhood{epts: make(map[portal.ID]*busEP)}
 	go p.startSending()
 }
 
@@ -98,7 +132,7 @@ func (p Protocol) startSending() {
 
 				// proto.Neighborhood stores portal.Endpoints, so we must type-assert
 				wg.Add(1)
-				peer.(*busEP).sendMsg(msg.Ref())
+				peer.sendMsg(msg.Ref())
 			}
 			done()
 			wg.Done()
