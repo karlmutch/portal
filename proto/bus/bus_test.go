@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/lthibault/portal"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegration(t *testing.T) {
@@ -20,14 +21,10 @@ func TestIntegration(t *testing.T) {
 
 	bP, cP := ptls[0], ptls[1:len(ptls)]
 
-	if err := bP.Bind("/test/bus/integration"); err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, bP.Bind("/test/bus/integration"))
 
-	for i, p := range cP {
-		if err := p.Connect("/test/bus/integration"); err != nil {
-			t.Errorf("portal %d: %s", i, err)
-		}
+	for _, p := range cP {
+		assert.NoError(t, p.Connect("/test/bus/integration"))
 	}
 
 	t.Run("SendBind", func(t *testing.T) {
@@ -36,7 +33,7 @@ func TestIntegration(t *testing.T) {
 		ch := make(chan struct{})
 		chSync := make(chan struct{})
 		go func() {
-			wg.Add(nPtls - 1)
+			wg.Add(nPtls - 1) // nPtls - one bind portal
 			close(chSync)
 			wg.Wait()
 			ch <- struct{}{}
