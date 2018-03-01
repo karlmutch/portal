@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/lthibault/portal"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -13,13 +14,8 @@ func TestIntegration(t *testing.T) {
 	p0 := New(portal.Cfg{})
 	p1 := New(portal.Cfg{})
 
-	if err := p0.Bind("/test/pair/integration"); err != nil {
-		t.Error(err)
-	}
-
-	if err := p1.Connect("/test/pair/integration"); err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, p0.Bind("/test/pair/integration"))
+	assert.NoError(t, p1.Connect("/test/pair/integration"))
 
 	var g errgroup.Group
 
@@ -55,15 +51,7 @@ func TestIntegration(t *testing.T) {
 		return
 	})
 
-	if err := g.Wait(); err != nil {
-		t.Error(err)
-	}
-
-	if l2r != iter-1 {
-		t.Errorf("left to right:  expected %d, got %d", iter-1, l2r)
-	}
-
-	if r2l != iter-1 {
-		t.Errorf("right to left:  expected %d, got %d", iter-1, r2l)
-	}
+	assert.NoError(t, g.Wait())
+	assert.Equal(t, iter-1, l2r, "left to right:  expected %d, got %d", iter-1, l2r)
+	assert.Equal(t, iter-1, r2l, "right to left:  expected %d, got %d", iter-1, r2l)
 }
