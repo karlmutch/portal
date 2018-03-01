@@ -132,10 +132,12 @@ func (p Protocol) startSending() {
 
 				// proto.Neighborhood stores portal.Endpoints, so we must type-assert
 				wg.Add(1)
-				peer.sendMsg(msg.Ref())
+				go func(bep *busEP) {
+					bep.sendMsg(msg.Ref())
+					wg.Done()
+				}(peer)
 			}
 			done()
-			wg.Done()
 		}
 	}
 }
