@@ -13,8 +13,8 @@ func (id ID) String() string { return uuid.UUID(id).String() }
 // NewID generates a unique ID
 func NewID() ID { return ID(uuid.Must(uuid.NewV4())) }
 
-// Transporter can Bind and Connect to an address
-type Transporter interface {
+// BindConnectCloser can Bind and Connect to an address
+type BindConnectCloser interface {
 	Connect(string) error
 	Bind(string) error
 	Close()
@@ -34,13 +34,13 @@ type Sender interface {
 
 // ReadOnly is the portal equivalent of <-chan
 type ReadOnly interface {
-	Transporter
+	BindConnectCloser
 	Recver
 }
 
 // WriteOnly is the portal equivalent of chan<-
 type WriteOnly interface {
-	Transporter
+	BindConnectCloser
 	Sender
 }
 
@@ -49,7 +49,7 @@ type WriteOnly interface {
 // messaging topology.  Applications can have more than one Socket open
 // at a time.
 type Portal interface {
-	Transporter
+	BindConnectCloser
 	Sender
 	Recver
 }
