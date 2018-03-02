@@ -9,7 +9,8 @@ import (
 // Cfg is a base configuration struct
 type Cfg struct {
 	ctx.Doner
-	Size int
+	Size         int
+	DropWhenFull bool
 }
 
 // Async returns true if the Portal is buffered
@@ -37,6 +38,7 @@ type portal struct {
 
 	chSend chan *Message
 	chRecv chan *Message
+	chSink chan *Message
 
 	ProtocolSendHook
 	ProtocolRecvHook
@@ -127,11 +129,20 @@ func (p *portal) SendMsg(msg *Message) {
 		return // drop msg silently
 	}
 
-	select {
-	case p.chSend <- msg:
-	case <-p.Done():
-		msg.Free()
+	if p.Cfg.DropWhenFull {
+		select {
+		case p.chSend <- msg:
+		default:
+			msg.Free()
+		}
+	} else {
+		select {
+		case p.chSend <- msg:
+		case <-p.Done():
+			msg.Free()
+		}
 	}
+
 }
 
 func (p *portal) RecvMsg() *Message {
