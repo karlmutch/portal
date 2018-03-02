@@ -20,16 +20,28 @@ type Transporter interface {
 	Close()
 }
 
+// Recver can receive values
+type Recver interface {
+	Recv() interface{}
+	TryRecv() (interface{}, error)
+}
+
+// Sender can send values
+type Sender interface {
+	Send(interface{})
+	TrySend(interface{}) error
+}
+
 // ReadOnly is the portal equivalent of <-chan
 type ReadOnly interface {
 	Transporter
-	Recv() interface{}
+	Recver
 }
 
 // WriteOnly is the portal equivalent of chan<-
 type WriteOnly interface {
 	Transporter
-	Send(interface{})
+	Sender
 }
 
 // Portal is the main access handle applications use to access the protocol
@@ -38,8 +50,8 @@ type WriteOnly interface {
 // at a time.
 type Portal interface {
 	Transporter
-	Send(interface{})
-	Recv() interface{}
+	Sender
+	Recver
 }
 
 // Endpoint is used by the Protocol implementation to access the underlying

@@ -93,6 +93,18 @@ func (p *portal) Bind(addr string) (err error) {
 	return
 }
 
+func (p *portal) TrySend(v interface{}) (err error) {
+	defer func() { err = recover().(error) }()
+	p.Send(v)
+	return
+}
+
+func (p *portal) TryRecv() (v interface{}, err error) {
+	defer func() { err = recover().(error) }()
+	v = p.Recv()
+	return
+}
+
 func (p *portal) Send(v interface{}) {
 	if !p.ready {
 		panic(errors.New("send to disconnected portal"))
