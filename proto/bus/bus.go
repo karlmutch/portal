@@ -105,7 +105,6 @@ func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 }
 
 func (p Protocol) startSending() {
-	var wg sync.WaitGroup
 
 	sq := p.ptl.SendChannel()
 	cq := p.ptl.CloseChannel()
@@ -122,26 +121,32 @@ func (p Protocol) startSending() {
 				panic("ensure portal.Doner fires closes before chSend/chRecv")
 			}
 
-			// broadcast
-			m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
-			for id, peer := range m {
-				// if there's a header, it means the msg was rebroadcast
-				if msg.From != nil && id == *msg.From {
-					continue
-				}
-
-				// proto.Neighborhood stores portal.Endpoints, so we must type-assert
-				wg.Add(1)
-				go func(bep *busEP) {
-					bep.sendMsg(msg.Ref())
-					wg.Done()
-				}(peer)
-			}
-
-			wg.Wait()
-			done()
+			p.broadcast(msg)
 		}
 	}
+}
+
+func (p *Protocol) broadcast(msg *portal.Message) {
+	var wg sync.WaitGroup
+
+	m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
+	defer done()
+
+	for id, peer := range m {
+		// if there's a header, it means the msg was rebroadcast
+		if msg.From != nil && id == *msg.From {
+			continue
+		}
+
+		// proto.Neighborhood stores portal.Endpoints, so we must type-assert
+		wg.Add(1)
+		go func(bep *busEP) {
+			bep.sendMsg(msg.Ref())
+			wg.Done()
+		}(peer)
+	}
+
+	wg.Wait()
 }
 
 func (p *Protocol) AddEndpoint(ep portal.Endpoint) {
