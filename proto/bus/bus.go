@@ -137,6 +137,8 @@ func (p Protocol) startSending() {
 					wg.Done()
 				}(peer)
 			}
+
+			wg.Wait()
 			done()
 		}
 	}
