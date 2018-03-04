@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const integrationAddr = "/test/bus/integration"
+
 func TestIntegration(t *testing.T) {
 	const nPtls = 4
 
@@ -21,10 +23,10 @@ func TestIntegration(t *testing.T) {
 
 	bP, cP := ptls[0], ptls[1:len(ptls)]
 
-	assert.NoError(t, bP.Bind("/test/bus/integration"))
+	assert.NoError(t, bP.Bind(integrationAddr))
 
 	for _, p := range cP {
-		assert.NoError(t, p.Connect("/test/bus/integration"))
+		assert.NoError(t, p.Connect(integrationAddr))
 	}
 
 	t.Run("SendBind", func(t *testing.T) {
