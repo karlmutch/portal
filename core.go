@@ -38,7 +38,6 @@ type portal struct {
 
 	chSend chan *Message
 	chRecv chan *Message
-	chSink chan *Message
 
 	ProtocolSendHook
 	ProtocolRecvHook
