@@ -18,6 +18,7 @@ const (
 	Surv
 	Resp
 	Bus
+	Mesh
 )
 
 // EndpointsCompatible returns true if the Endpoints have compatible protocols
