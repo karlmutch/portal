@@ -14,15 +14,11 @@ type messagePool struct{ sync.Pool }
 
 func (pool *messagePool) Get() *Message    { return pool.Pool.Get().(*Message) }
 func (pool *messagePool) Put(msg *Message) { go pool.put(msg) }
-func (pool *messagePool) put(msg *Message) {
-	msg.From = nil
-	pool.Pool.Put(msg)
-}
+func (pool *messagePool) put(msg *Message) { pool.Pool.Put(msg) }
 
 // Message wraps a value and sends it down the portal
 type Message struct {
 	wg    sync.WaitGroup
-	From  *ID
 	Value interface{}
 }
 
