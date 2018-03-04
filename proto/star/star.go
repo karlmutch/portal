@@ -8,10 +8,6 @@ import (
 	"github.com/lthibault/portal/proto"
 )
 
-type msgSender interface {
-	sendMsg(*portal.Message)
-}
-
 type starEP struct {
 	portal.Endpoint
 	q    chan *portal.Message
@@ -48,8 +44,6 @@ func (s starEP) startReceiving() {
 	cq := ctx.Link(ctx.Lift(s.star.ptl.CloseChannel()), s)
 
 	for msg := range s.SendChannel() {
-		id := s.ID()
-		msg.From = &id
 		select {
 		case <-cq:
 			msg.Free()
@@ -132,23 +126,18 @@ func (p Protocol) startSending() {
 func (p Protocol) broadcast(msg *portal.Message, sender *starEP) {
 	defer msg.Free()
 
-	// If sender is nil, the message originates from the local peer, and should
-	// be relayed to all neighbors.
-	if sender == nil {
-		m, done := p.n.RMap()
-		defer done()
-		for _, se := range m {
-			if sender == se {
-				continue
-			}
-
-			select {
-			case se.q <- msg.Ref(): // Ref because of deferred Free
-			case <-p.ptl.CloseChannel():
-				return
-			}
+	// Relay to all neighbors
+	m, done := p.n.RMap()
+	defer done()
+	for _, se := range m {
+		if sender == se {
+			continue
 		}
-	} else { // the message originates from a remote peer; receive it.
+
+		se.sendMsg(msg.Ref())
+	}
+
+	if sender != nil { // the message originates from a remote peer; receive it.
 		select {
 		case p.ptl.RecvChannel() <- msg.Ref():
 		case <-p.ptl.CloseChannel():
