@@ -129,7 +129,7 @@ func (p Protocol) startSending() {
 
 			for id, peer := range m {
 				// if there's a header, it means the msg was rebroadcast
-				if id == *msg.From {
+				if msg.From != nil && id == *msg.From {
 					continue
 				}
 
@@ -151,6 +151,7 @@ func (p Protocol) startSending() {
 				msg.Free()
 			}
 
+			wg.Wait()
 			done()
 		}
 	}
@@ -171,3 +172,8 @@ func (Protocol) Number() uint16     { return proto.Star }
 func (Protocol) PeerNumber() uint16 { return proto.Star }
 func (Protocol) Name() string       { return "star" }
 func (Protocol) PeerName() string   { return "star" }
+
+// New allocates a portal using the STAR protocol
+func New(cfg portal.Cfg) portal.Portal {
+	return portal.MakePortal(cfg, &Protocol{})
+}
