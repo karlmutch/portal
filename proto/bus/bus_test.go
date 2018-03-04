@@ -2,7 +2,6 @@ package bus
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -29,35 +28,16 @@ func TestIntegration(t *testing.T) {
 	}
 
 	t.Run("SendBind", func(t *testing.T) {
-		var wg sync.WaitGroup
-
-		ch := make(chan struct{})
-		chSync := make(chan struct{})
+		go bP.Send(true)
 		go func() {
-			wg.Add(nPtls - 1) // nPtls - one bind portal
-			close(chSync)
-			wg.Wait()
-			ch <- struct{}{}
+			if bP.Recv() != nil {
+				panic("bP should not recv its own messages")
+			}
 		}()
 
-		for i, p := range cP {
-			go func(i int, p portal.Portal) {
-				<-chSync
-				t.Logf("connPortal %d recved %b", i, p.Recv())
-				wg.Done()
-			}(i, p)
-		}
-
-		go func() {
-			<-chSync
-			bP.Send(true)
-		}()
-
-		select {
-		case <-ch:
-		case <-time.After(time.Millisecond * 100):
-			t.Error("at least one portal did not receive the value sent by bP")
-		}
+		assert.True(t, cP[0].Recv().(bool))
+		assert.True(t, cP[1].Recv().(bool))
+		assert.True(t, cP[2].Recv().(bool))
 	})
 
 	t.Run("SendConn", func(t *testing.T) {
