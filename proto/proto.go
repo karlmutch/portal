@@ -18,9 +18,6 @@ const (
 	Surv
 	Resp
 	Bus
-	Star
-	Brok
-	Deal
 )
 
 // EndpointsCompatible returns true if the Endpoints have compatible protocols
@@ -34,25 +31,6 @@ func MustBeCompatible(sig0, sig1 portal.ProtocolSignature) {
 		panic(errors.Errorf("%T incompatible with %T", sig0, sig1))
 	}
 }
-
-// // PeerEndpoint is the endpoint to a remote peer.
-// type PeerEndpoint interface {
-// 	ctx.Doner
-// 	portal.Endpoint
-// }
-
-// type peerEP struct {
-// 	portal.Endpoint
-// 	cq chan struct{}
-// }
-
-// // NewPeerEP wraps an endpoint in a PeerEndpoint
-// func NewPeerEP(ep portal.Endpoint) PeerEndpoint {
-// 	return &peerEP{Endpoint: ep, cq: make(chan struct{})}
-// }
-
-// func (p peerEP) Done() <-chan struct{} { return p.cq }
-// func (p peerEP) Close()                { close(p.cq) }
 
 // Neighborhood maintains a map of portal.Endpoints
 type Neighborhood interface {
