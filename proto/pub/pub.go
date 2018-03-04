@@ -64,8 +64,6 @@ func (p Protocol) RemoveEndpoint(ep portal.Endpoint) { p.n.DropPeer(ep.ID()) }
 
 func (Protocol) Number() uint16     { return proto.Pub }
 func (Protocol) PeerNumber() uint16 { return proto.Sub }
-func (Protocol) Name() string       { return "pub" }
-func (Protocol) PeerName() string   { return "sub" }
 
 // New allocates a portal using the PUB protocol
 func New(cfg portal.Cfg) portal.WriteOnly {

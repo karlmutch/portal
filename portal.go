@@ -71,14 +71,8 @@ type ProtocolSignature interface {
 	// as assigned by the SP governing body. (IANA?)
 	Number() uint16
 
-	// Name returns our name.
-	Name() string
-
 	// PeerNumber() returns a 16-bit number for our peer protocol.
 	PeerNumber() uint16
-
-	// PeerName() returns the name of our peer protocol.
-	PeerName() string
 }
 
 // Protocol implements messaging topography elements.  Each protocol will

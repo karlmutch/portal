@@ -45,7 +45,6 @@ func (s starEP) startSending() {
 }
 
 func (s starEP) startReceiving() {
-	rq := s.star.ptl.RecvChannel()
 	cq := ctx.Link(ctx.Lift(s.star.ptl.CloseChannel()), s)
 
 	for msg := range s.SendChannel() {
@@ -55,7 +54,8 @@ func (s starEP) startReceiving() {
 		case <-cq:
 			msg.Free()
 			return
-		case rq <- msg:
+		default:
+			s.star.broadcast(msg, &s)
 		}
 	}
 }
@@ -108,7 +108,6 @@ func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 }
 
 func (p Protocol) startSending() {
-	var wg sync.WaitGroup
 
 	sq := p.ptl.SendChannel()
 	cq := p.ptl.CloseChannel()
@@ -125,34 +124,33 @@ func (p Protocol) startSending() {
 				panic("ensure portal.Doner fires closes before chSend/chRecv")
 			}
 
-			m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
+			p.broadcast(msg, nil)
+		}
+	}
+}
 
-			for id, peer := range m {
-				// if there's a header, it means the msg was rebroadcast
-				if msg.From != nil && id == *msg.From {
-					continue
-				}
+func (p Protocol) broadcast(msg *portal.Message, sender *starEP) {
+	defer msg.Free()
 
-				wg.Add(1)
-				go func(sep *starEP) {
-					sep.sendMsg(msg.Ref())
-					wg.Done()
-				}(peer)
-
+	// If we are NOT the originator, we should recv the message
+	if sender == nil {
+		select {
+		case p.ptl.RecvChannel() <- msg.Ref():
+		case <-p.ptl.CloseChannel():
+		}
+	} else { // pass the msg to everybody else
+		m, done := p.n.RMap()
+		defer done()
+		for _, se := range m {
+			if sender == se {
+				continue
 			}
 
-			if msg.From != nil { // Grab a local copy and send it up
-				select {
-				case <-p.ptl.CloseChannel():
-					msg.Free()
-				case p.ptl.RecvChannel() <- msg:
-				}
-			} else { // Not sending the message up, so let's release it
-				msg.Free()
+			select {
+			case se.q <- msg.Ref():
+			case <-p.ptl.CloseChannel():
+				return
 			}
-
-			wg.Wait()
-			done()
 		}
 	}
 }

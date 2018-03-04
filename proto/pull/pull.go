@@ -25,9 +25,7 @@ func (p Protocol) startReceiving(ep portal.Endpoint) {
 }
 
 func (Protocol) Number() uint16                    { return proto.Pull }
-func (Protocol) Name() string                      { return "pull" }
 func (Protocol) PeerNumber() uint16                { return proto.Push }
-func (Protocol) PeerName() string                  { return "push" }
 func (Protocol) RemoveEndpoint(ep portal.Endpoint) {}
 
 func (p Protocol) AddEndpoint(ep portal.Endpoint) {

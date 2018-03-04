@@ -21,7 +21,7 @@ func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 	p.n = proto.NewNeighborhood()
 }
 
-func (p *Protocol) startServing(pe proto.PeerEndpoint) {
+func (p *Protocol) startServing(ep portal.Endpoint) {
 	var msg *portal.Message
 	defer func() {
 		if msg != nil {
@@ -37,7 +37,7 @@ func (p *Protocol) startServing(pe proto.PeerEndpoint) {
 	rq := p.ptl.RecvChannel()
 	sq := p.ptl.SendChannel()
 
-	for msg = pe.Announce(); msg != nil; msg = pe.Announce() {
+	for msg = ep.Announce(); msg != nil; msg = ep.Announce() {
 		p.Lock()
 
 		select {
@@ -68,16 +68,13 @@ func (p *Protocol) startServing(pe proto.PeerEndpoint) {
 
 func (*Protocol) Number() uint16     { return proto.Rep }
 func (*Protocol) PeerNumber() uint16 { return proto.Req }
-func (*Protocol) Name() string       { return "rep" }
-func (*Protocol) PeerName() string   { return "req" }
 
 func (p *Protocol) AddEndpoint(ep portal.Endpoint) {
 	proto.MustBeCompatible(p, ep.Signature())
 
-	pe := proto.NewPeerEP(ep)
-	p.n.SetPeer(ep.ID(), pe)
+	p.n.SetPeer(ep.ID(), ep)
 
-	go p.startServing(pe)
+	go p.startServing(ep)
 }
 
 func (p *Protocol) RemoveEndpoint(ep portal.Endpoint) { p.n.DropPeer(ep.ID()) }

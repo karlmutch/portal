@@ -126,7 +126,7 @@ func (p Protocol) startSending() {
 	}
 }
 
-func (p *Protocol) broadcast(msg *portal.Message) {
+func (p Protocol) broadcast(msg *portal.Message) {
 	var wg sync.WaitGroup
 
 	m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
@@ -162,8 +162,6 @@ func (p Protocol) RemoveEndpoint(ep portal.Endpoint) { p.n.DropPeer(ep.ID()) }
 
 func (Protocol) Number() uint16     { return proto.Bus }
 func (Protocol) PeerNumber() uint16 { return proto.Bus }
-func (Protocol) Name() string       { return "bus" }
-func (Protocol) PeerName() string   { return "bus" }
 
 // New allocates a portal using the BUS protocol
 func New(cfg portal.Cfg) portal.Portal {

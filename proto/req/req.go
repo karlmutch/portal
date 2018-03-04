@@ -65,8 +65,6 @@ func (p Protocol) startReceiving(ep portal.Endpoint) {
 
 func (Protocol) Number() uint16     { return proto.Req }
 func (Protocol) PeerNumber() uint16 { return proto.Rep }
-func (Protocol) Name() string       { return "req" }
-func (Protocol) PeerName() string   { return "rep" }
 
 func (p Protocol) AddEndpoint(ep portal.Endpoint) {
 	proto.MustBeCompatible(p, ep.Signature())

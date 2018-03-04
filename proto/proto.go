@@ -31,7 +31,7 @@ func EndpointsCompatible(sig0, sig1 portal.ProtocolSignature) bool {
 // MustBeCompatible panics if the Endpoints have incompatible protocols
 func MustBeCompatible(sig0, sig1 portal.ProtocolSignature) {
 	if !EndpointsCompatible(sig0, sig1) {
-		panic(errors.Errorf("%s incompatible with %s", sig0.Name(), sig1.Name()))
+		panic(errors.Errorf("%T incompatible with %T", sig0, sig1))
 	}
 }
 

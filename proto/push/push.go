@@ -39,9 +39,7 @@ func (p Protocol) startSending(pe portal.Endpoint) {
 }
 
 func (Protocol) Number() uint16     { return proto.Push }
-func (Protocol) Name() string       { return "push" }
 func (Protocol) PeerNumber() uint16 { return proto.Pull }
-func (Protocol) PeerName() string   { return "pull" }
 
 func (p Protocol) AddEndpoint(ep portal.Endpoint) {
 	proto.MustBeCompatible(p, ep.Signature())

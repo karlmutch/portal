@@ -44,9 +44,7 @@ func (p *Protocol) RemoveEndpoint(ep portal.Endpoint) {
 }
 
 func (*Protocol) Number() uint16     { return proto.Pair }
-func (*Protocol) Name() string       { return "pair" }
 func (*Protocol) PeerNumber() uint16 { return proto.Pair }
-func (*Protocol) PeerName() string   { return "pair" }
 
 func (p *Protocol) startReceiving() {
 	rq := p.ptl.RecvChannel()
