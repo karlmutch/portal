@@ -25,13 +25,17 @@ func TestIntegration(t *testing.T) {
 		assert.NoError(t, p.Connect(integrationAddr))
 	}
 
-	// t.Run("SendBind", func(t *testing.T) {
-	// 	go bP.Send(true)
+	t.Run("SendBind", func(t *testing.T) {
+		go bP.Send(true)
+		go func() {
+			bP.Recv()
+			panic("bP should not recv its own messages")
+		}()
 
-	// 	assert.True(t, cP[0].Recv().(bool))
-	// 	assert.True(t, cP[1].Recv().(bool))
-	// 	assert.True(t, cP[2].Recv().(bool))
-	// })
+		assert.True(t, cP[0].Recv().(bool))
+		assert.True(t, cP[1].Recv().(bool))
+		assert.True(t, cP[2].Recv().(bool))
+	})
 
 	// t.Run("SendConn", func(t *testing.T) {
 	// 	go cP[0].Send(true)

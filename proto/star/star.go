@@ -132,13 +132,9 @@ func (p Protocol) startSending() {
 func (p Protocol) broadcast(msg *portal.Message, sender *starEP) {
 	defer msg.Free()
 
-	// If we are NOT the originator, we should recv the message
+	// If sender is nil, the message originates from the local peer, and should
+	// be relayed to all neighbors.
 	if sender == nil {
-		select {
-		case p.ptl.RecvChannel() <- msg.Ref():
-		case <-p.ptl.CloseChannel():
-		}
-	} else { // pass the msg to everybody else
 		m, done := p.n.RMap()
 		defer done()
 		for _, se := range m {
@@ -147,10 +143,15 @@ func (p Protocol) broadcast(msg *portal.Message, sender *starEP) {
 			}
 
 			select {
-			case se.q <- msg.Ref():
+			case se.q <- msg.Ref(): // Ref because of deferred Free
 			case <-p.ptl.CloseChannel():
 				return
 			}
+		}
+	} else { // the message originates from a remote peer; receive it.
+		select {
+		case p.ptl.RecvChannel() <- msg.Ref():
+		case <-p.ptl.CloseChannel():
 		}
 	}
 }
