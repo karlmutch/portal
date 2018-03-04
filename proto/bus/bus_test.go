@@ -2,7 +2,6 @@ package bus
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"testing"
 	"time"
@@ -44,7 +43,7 @@ func TestIntegration(t *testing.T) {
 		for i, p := range cP {
 			go func(i int, p portal.Portal) {
 				<-chSync
-				log.Printf("connPortal %d recved %b", i, p.Recv())
+				t.Logf("connPortal %d recved %b", i, p.Recv())
 				wg.Done()
 			}(i, p)
 		}
@@ -62,7 +61,6 @@ func TestIntegration(t *testing.T) {
 	})
 
 	t.Run("SendConn", func(t *testing.T) {
-
 		for i, p := range cP {
 			t.Run(fmt.Sprintf("SendPortal%d", i), func(t *testing.T) {
 				go p.Send(true)
