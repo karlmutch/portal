@@ -60,16 +60,50 @@ func (s starEP) startReceiving() {
 	}
 }
 
+type starNeighborhood struct {
+	sync.RWMutex
+	epts map[portal.ID]*starEP
+}
+
+func (n *starNeighborhood) RMap() (map[portal.ID]*starEP, func()) {
+	n.RLock()
+	return n.epts, n.RUnlock
+}
+
+func (n *starNeighborhood) SetPeer(id portal.ID, se *starEP) {
+	n.Lock()
+	n.epts[id] = se
+	n.Unlock()
+}
+
+func (n *starNeighborhood) GetPeer(id portal.ID) (se *starEP, ok bool) {
+	n.RLock()
+	se, ok = n.epts[id]
+	n.RUnlock()
+	return
+}
+
+func (n *starNeighborhood) DropPeer(id portal.ID) {
+	n.Lock()
+	be := n.epts[id]
+	delete(n.epts, id)
+	n.Unlock()
+
+	if be != nil {
+		be.Close()
+	}
+}
+
 // Protocol implementing STAR
 type Protocol struct {
 	ptl portal.ProtocolPortal
-	n   proto.Neighborhood
+	n   *starNeighborhood
 }
 
 // Init the protocol (called by portal)
 func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 	p.ptl = ptl
-	p.n = proto.NewNeighborhood()
+	p.n = &starNeighborhood{epts: make(map[portal.ID]*starEP)}
 	go p.startSending()
 }
 
@@ -91,43 +125,35 @@ func (p Protocol) startSending() {
 				panic("ensure portal.Doner fires closes before chSend/chRecv")
 			}
 
-			p.broadcast(&wg, msg).Wait()
+			m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
+
+			for id, peer := range m {
+				// if there's a header, it means the msg was rebroadcast
+				if id == *msg.From {
+					continue
+				}
+
+				wg.Add(1)
+				go func(sep *starEP) {
+					sep.sendMsg(msg.Ref())
+					wg.Done()
+				}(peer)
+
+			}
+
+			if msg.From != nil { // Grab a local copy and send it up
+				select {
+				case <-p.ptl.CloseChannel():
+					msg.Free()
+				case p.ptl.RecvChannel() <- msg:
+				}
+			} else { // Not sending the message up, so let's release it
+				msg.Free()
+			}
+
+			done()
 		}
 	}
-}
-
-func (p Protocol) broadcast(wg *sync.WaitGroup, msg *portal.Message) (wgout *sync.WaitGroup) {
-	m, done := p.n.RMap() // get a read-locked map-view of the Neighborhood
-	defer done()
-
-	for id, peer := range m {
-		// if there's a header, it means the msg was rebroadcast
-		if id == *msg.From {
-			continue
-		}
-
-		// proto.Neighborhood stores portal.Endpoints, so we must type-assert
-		go p.unicast(wg, peer.(msgSender), msg)
-	}
-
-	if msg.From != nil { // Grab a local copy and send it up
-		select {
-		case <-p.ptl.CloseChannel():
-			msg.Free()
-			return wg
-		case p.ptl.RecvChannel() <- msg:
-		}
-	} else { // Not sending the message up, so let's release it
-		msg.Free()
-	}
-
-	return wg
-}
-
-func (p Protocol) unicast(wg *sync.WaitGroup, s msgSender, msg *portal.Message) {
-	wg.Add(1)
-	s.sendMsg(msg.Ref())
-	wg.Done()
 }
 
 func (p *Protocol) AddEndpoint(ep portal.Endpoint) {
