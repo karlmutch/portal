@@ -143,6 +143,8 @@ func (p *portal) SendMsg(msg *Message) {
 	if p.Cfg.DropWhenFull {
 		select {
 		case p.chSend <- msg:
+		case <-p.Done():
+			msg.Free()
 		default:
 			msg.Free()
 		}
@@ -176,8 +178,6 @@ func (p *portal) Close() { p.cancel() }
 // Implement Endpoint
 func (p *portal) ID() ID { return p.id }
 
-// func (p *portal) Notify(msg *Message)          { p.chRecv <- msg }
-// func (p *portal) Announce() *Message           { return <-p.chSend }
 func (p *portal) Signature() ProtocolSignature { return p.proto }
 
 // Implement ProtocolSocket
