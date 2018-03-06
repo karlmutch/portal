@@ -49,6 +49,7 @@ type WriteOnly interface {
 // messaging topology.  Applications can have more than one Socket open
 // at a time.
 type Portal interface {
+	ID() ID
 	BindConnectCloser
 	Sender
 	Recver
@@ -100,6 +101,8 @@ type Protocol interface {
 // except by using functions made available on the ProtocolSocket.  Note
 // that all functions listed here are non-blocking.
 type ProtocolPortal interface {
+	ID() ID
+
 	// SendChannel represents the channel used to send messages.  The
 	// application injects messages to it, and the protocol consumes
 	// messages from it.  The channel may be closed when the core needs to
