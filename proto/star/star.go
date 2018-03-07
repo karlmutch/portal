@@ -86,19 +86,19 @@ type Protocol struct {
 func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 	p.ptl = ptl
 	p.n = &starNeighborhood{epts: make(map[portal.ID]*starEP)}
-	// go p.startSending()
+	go p.startSending()
 }
 
 func (p Protocol) broadcast(m *portal.Message, sender *starEP) {
 	var wg sync.WaitGroup
 
 	epts, done := p.n.RMap()
-	wg.Add(len(epts))
 	for _, sep := range epts {
 		if sender == sep {
 			continue
 		}
 
+		wg.Add(1)
 		m.Ref()
 		go func(peer *starEP) {
 			select {
@@ -126,22 +126,22 @@ func (p Protocol) recvLocal(m *portal.Message) {
 	}
 }
 
-// func (p Protocol) startSending() {
-// 	cq := p.ptl.CloseChannel()
-// 	sq := p.ptl.SendChannel()
+func (p Protocol) startSending() {
+	cq := p.ptl.CloseChannel()
+	sq := p.ptl.SendChannel()
 
-// 	for {
-// 		select {
-// 		case <-cq:
-// 			return
-// 		case m, ok := <-sq:
-// 			if !ok {
-// 				sq = p.ptl.SendChannel()
-// 			}
-// 			p.broadcast(m, nil)
-// 		}
-// 	}
-// }
+	for {
+		select {
+		case <-cq:
+			return
+		case m, ok := <-sq:
+			if !ok {
+				sq = p.ptl.SendChannel()
+			}
+			p.broadcast(m, nil)
+		}
+	}
+}
 
 // AddEndpoint to the Portal
 func (p Protocol) AddEndpoint(ep portal.Endpoint) {
