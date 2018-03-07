@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const integrationAddr = "/test/bus/integration"
+const integrationAddr = "/test/star/integration"
 
 func initPtls(t *testing.T, nPtls int) (bP portal.Portal, cP []portal.Portal) {
 	ptls := make([]portal.Portal, nPtls)
