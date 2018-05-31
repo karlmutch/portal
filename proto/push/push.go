@@ -22,7 +22,7 @@ func (p *Protocol) Init(ptl portal.ProtocolPortal) {
 func (p Protocol) startSending(pe portal.Endpoint) {
 	sq := p.ptl.SendChannel()
 	rq := pe.RecvChannel()
-	cq := ctx.Link(ctx.Lift(p.ptl.CloseChannel()), pe)
+	cq := ctx.Link(ctx.C(p.ptl.CloseChannel()), pe)
 
 	for {
 		select {

@@ -42,7 +42,7 @@ func (b busEP) startSending() {
 
 func (b busEP) startReceiving() {
 	rq := b.bus.ptl.RecvChannel()
-	cq := ctx.Link(ctx.Lift(b.bus.ptl.CloseChannel()), b)
+	cq := ctx.Link(ctx.C(b.bus.ptl.CloseChannel()), b)
 
 	for msg := range b.SendChannel() {
 		id := b.ID()

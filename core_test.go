@@ -18,7 +18,7 @@ func TestMkPortal(t *testing.T) {
 	proto := mockProto{}
 
 	t.Run("DonerAssignment", func(t *testing.T) {
-		d, cancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+		d, cancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 		defer cancel()
 
 		cfg := Cfg{Doner: d}
@@ -27,7 +27,7 @@ func TestMkPortal(t *testing.T) {
 	})
 
 	t.Run("Sync", func(t *testing.T) {
-		d, cancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+		d, cancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 		defer cancel()
 
 		cfg := Cfg{Doner: d}
@@ -38,7 +38,7 @@ func TestMkPortal(t *testing.T) {
 	})
 
 	t.Run("Async", func(t *testing.T) {
-		d, cancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+		d, cancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 		defer cancel()
 
 		cfg := Cfg{Doner: d, Size: 1}
@@ -59,7 +59,7 @@ func TestTransportIntegration(t *testing.T) {
 		epRemoved: bindEPRemoved,
 	}
 
-	dBind, dCancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+	dBind, dCancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 
 	cfg := Cfg{Doner: dBind}
 
@@ -74,7 +74,7 @@ func TestTransportIntegration(t *testing.T) {
 		epRemoved: connEPRemoved,
 	}
 
-	dConn, cCancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+	dConn, cCancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 
 	cfg = Cfg{Doner: dConn}
 
@@ -144,7 +144,7 @@ func TestTransportIntegration(t *testing.T) {
 }
 
 func mkSendRecvTestPortal(p Protocol, size int) (*portal, func()) {
-	d, cancel := ctx.WithCancel(ctx.Lift(make(chan struct{})))
+	d, cancel := ctx.WithCancel(ctx.C(make(chan struct{})))
 	cfg := Cfg{Doner: d, Size: size}
 	ptl := newPortal(p, cfg, cancel)
 	return ptl, cancel
